@@ -1,0 +1,9 @@
+{
+  "name": "Pok\u00e9mon Damage Calculator",
+  "short_name": "Pok\u00e9 Calc",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "description": "Mobile-friendly Pok\u00e9mon damage calculator MVP."
+}

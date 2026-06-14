@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Poké Calc">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<title>Pokémon Damage Calculator</title>
+<style>
+:root {
+  --bg:#0f172a; --card:#111827; --text:#e5e7eb; --muted:#94a3b8; --border:#334155;
+  --accent:#38bdf8; --good:#22c55e; --warn:#f59e0b; --bad:#ef4444;
+}
+* { box-sizing: border-box; }
+body {
+  margin:0; padding:14px; padding-bottom:40px; background:var(--bg); color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+}
+h1 { font-size:1.45rem; margin:0 0 4px; }
+.subtitle,.small { color:var(--muted); font-size:.82rem; line-height:1.35; }
+.card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:14px; margin:14px 0; box-shadow:0 8px 20px rgba(0,0,0,.18); }
+h2 { font-size:1.05rem; margin:0 0 10px; }
+label { display:block; color:var(--muted); font-size:.78rem; margin-bottom:4px; }
+input,select { width:100%; padding:10px; border-radius:10px; border:1px solid var(--border); background:#020617; color:var(--text); font-size:.95rem; }
+.field { margin-bottom:10px; }
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+button { width:100%; border:0; padding:13px; border-radius:14px; background:var(--accent); color:#03101a; font-weight:800; font-size:1rem; margin-bottom:8px; }
+button.secondary { background:#1e293b; color:var(--text); border:1px solid var(--border); }
+.statline { background:#020617; border:1px solid var(--border); border-radius:12px; padding:10px; color:var(--muted); font-size:.86rem; line-height:1.55; }
+.statline b { color:white; }
+.damage { font-size:1.35rem; font-weight:800; }
+.pill { display:inline-block; border:1px solid var(--border); border-radius:999px; padding:4px 9px; color:var(--muted); font-size:.78rem; margin:2px 4px 2px 0; }
+.bar { background:#020617; border:1px solid var(--border); border-radius:999px; overflow:hidden; height:18px; margin:10px 0; }
+.bar-inner { height:100%; width:0%; background:var(--good); transition: width .2s ease; }
+.status { padding:8px 10px; border-radius:10px; background:#064e3b; color:#bbf7d0; font-size:.82rem; margin-top:10px; }
+</style>
+</head>
+<body>
+<h1>Pokémon Damage Calculator</h1>
+<div class="subtitle">GitHub Pages build — JavaScript web app</div>
+<div class="status">Ready. Select Pokémon/move, tap load, then calculate.</div>
+
+<div class="card">
+<h2>Attacker</h2>
+<div class="field"><label>Attacking Pokémon</label><select id="attackerPokemon"></select></div>
+<button type="button" id="loadAttacker">Load Attacker Stats</button>
+<div class="grid2">
+  <div class="field"><label>Level</label><input id="attLevel" type="number" value="50"></div>
+  <div class="field"><label>Nature</label><select id="attNature"></select></div>
+</div>
+<div class="grid2">
+  <button class="secondary" type="button" id="attPhys">252 Atk</button>
+  <button class="secondary" type="button" id="attSpec">252 SpA</button>
+</div>
+<div class="grid3">
+  <div class="field"><label>Base Atk</label><input id="attBaseAtk" type="number" value="100"></div>
+  <div class="field"><label>Atk EV</label><input id="attAtkEV" type="number" value="252"></div>
+  <div class="field"><label>Atk IV</label><input id="attAtkIV" type="number" value="31"></div>
+</div>
+<div class="grid3">
+  <div class="field"><label>Base SpA</label><input id="attBaseSpa" type="number" value="100"></div>
+  <div class="field"><label>SpA EV</label><input id="attSpaEV" type="number" value="252"></div>
+  <div class="field"><label>SpA IV</label><input id="attSpaIV" type="number" value="31"></div>
+</div>
+<div class="statline">Loaded: <b id="attLoaded">Custom</b><br>Using Atk: <b id="attAtkStat">0</b> · Using SpA: <b id="attSpaStat">0</b></div>
+</div>
+
+<div class="card">
+<h2>Move</h2>
+<div class="field"><label>Move selector</label><select id="moveSelect"></select></div>
+<button type="button" id="loadMove">Load Move</button>
+<div class="grid2">
+  <div class="field"><label>Move Name</label><input id="moveName" value="Flamethrower"></div>
+  <div class="field"><label>Move Type</label><select id="moveType"></select></div>
+</div>
+<div class="grid2">
+  <div class="field"><label>Power</label><input id="power" type="number" value="90"></div>
+  <div class="field"><label>Category</label><select id="category"><option>Physical</option><option selected>Special</option></select></div>
+</div>
+<div class="grid3">
+  <div class="field"><label>STAB?</label><select id="stab"><option value="1">No</option><option value="1.5" selected>Yes</option></select></div>
+  <div class="field"><label>Effectiveness</label><select id="typeEff"><option value="0">0x</option><option value="0.25">¼x</option><option value="0.5">½x</option><option value="1" selected>1x</option><option value="2">2x</option><option value="4">4x</option></select></div>
+  <div class="field"><label>Critical?</label><select id="crit"><option value="1" selected>No</option><option value="1.5">Yes</option></select></div>
+</div>
+<div class="grid3">
+  <div class="field"><label>Burn?</label><select id="burn"><option value="1" selected>No</option><option value="0.5">Yes</option></select></div>
+  <div class="field"><label>Spread?</label><select id="spread"><option value="1" selected>No</option><option value="0.75">Yes</option></select></div>
+  <div class="field"><label>Other Mod</label><input id="otherMod" type="number" step="0.01" value="1"></div>
+</div>
+</div>
+
+<div class="card">
+<h2>Defender</h2>
+<div class="field"><label>Defending Pokémon</label><select id="defenderPokemon"></select></div>
+<button type="button" id="loadDefender">Load Defender Stats</button>
+<div class="grid2">
+  <div class="field"><label>Level</label><input id="defLevel" type="number" value="50"></div>
+  <div class="field"><label>Nature</label><select id="defNature"></select></div>
+</div>
+<div class="grid3">
+  <button class="secondary" type="button" id="defNone">0 Bulk</button>
+  <button class="secondary" type="button" id="defPhys">252 HP / Def</button>
+  <button class="secondary" type="button" id="defSpec">252 HP / SpD</button>
+</div>
+<div class="grid3">
+  <div class="field"><label>Base HP</label><input id="defBaseHp" type="number" value="100"></div>
+  <div class="field"><label>HP EV</label><input id="defHpEV" type="number" value="0"></div>
+  <div class="field"><label>HP IV</label><input id="defHpIV" type="number" value="31"></div>
+</div>
+<div class="grid3">
+  <div class="field"><label>Base Def</label><input id="defBaseDef" type="number" value="100"></div>
+  <div class="field"><label>Def EV</label><input id="defDefEV" type="number" value="0"></div>
+  <div class="field"><label>Def IV</label><input id="defDefIV" type="number" value="31"></div>
+</div>
+<div class="grid3">
+  <div class="field"><label>Base SpD</label><input id="defBaseSpd" type="number" value="100"></div>
+  <div class="field"><label>SpD EV</label><input id="defSpdEV" type="number" value="0"></div>
+  <div class="field"><label>SpD IV</label><input id="defSpdIV" type="number" value="31"></div>
+</div>
+<div class="statline">Loaded: <b id="defLoaded">Custom</b><br>HP: <b id="defHpStat">0</b> · Def: <b id="defDefStat">0</b> · SpD: <b id="defSpdStat">0</b></div>
+</div>
+
+<div class="card"><button type="button" id="calcBtn">Calculate Damage</button></div>
+
+<div class="card">
+<h2>Result</h2>
+<div id="result">Select Pokémon/move, tap the load buttons, then calculate.</div>
+<div class="bar"><div class="bar-inner" id="barInner"></div></div>
+<div class="small">Uses standard core Pokémon stat formulas and 16 damage rolls from 85% to 100%. MVP, not a full Showdown-perfect calculator yet.</div>
+</div>
+
+<script>
+const POKEMON = {"Aegislash Blade": [60, 140, 50, 140, 50, 60], "Aegislash Shield": [60, 50, 140, 50, 140, 60], "Alakazam": [55, 50, 45, 135, 95, 120], "Archaludon": [90, 105, 130, 125, 65, 85], "Beedrill": [65, 90, 40, 45, 80, 75], "Bellibolt": [109, 64, 91, 103, 83, 45], "Ceruledge": [75, 125, 80, 60, 100, 85], "Charizard": [78, 84, 78, 109, 85, 100], "Clefable": [95, 70, 73, 95, 90, 60], "Corviknight": [98, 87, 105, 53, 85, 67], "Crabominable": [97, 132, 77, 62, 67, 43], "Dragonite": [91, 134, 95, 100, 100, 80], "Dragapult": [88, 120, 75, 100, 75, 142], "Empoleon": [84, 86, 88, 111, 101, 60], "Froslass": [70, 80, 70, 80, 70, 110], "Gallade": [68, 125, 65, 65, 115, 80], "Garchomp": [108, 130, 95, 80, 85, 102], "Gengar": [60, 65, 60, 130, 75, 110], "Glimmora": [83, 55, 90, 130, 81, 86], "Greninja": [72, 95, 67, 103, 71, 122], "Gyarados": [95, 125, 79, 60, 100, 81], "Hippowdon": [108, 112, 118, 68, 72, 47], "Kangaskhan": [105, 95, 80, 40, 80, 90], "Kingambit": [100, 135, 120, 60, 85, 50], "Lucario": [70, 110, 70, 115, 70, 90], "Mamoswine": [110, 130, 80, 70, 60, 80], "Mega Charizard Y": [78, 104, 78, 159, 115, 100], "Mega Gengar": [60, 65, 80, 170, 95, 130], "Mega Gyarados": [95, 155, 109, 70, 130, 81], "Mega Kangaskhan": [105, 125, 100, 60, 100, 100], "Mega Lopunny": [65, 136, 94, 54, 96, 135], "Meganium": [80, 82, 100, 83, 100, 80], "Meowscarada": [76, 110, 70, 81, 70, 123], "Mimikyu": [55, 90, 80, 50, 105, 96], "Mudsdale": [100, 125, 100, 55, 85, 35], "Ninetales-Alola": [73, 67, 75, 81, 100, 109], "Primarina": [80, 74, 74, 126, 116, 60], "Rotom-Wash": [50, 65, 107, 105, 107, 86], "Scizor": [70, 130, 100, 55, 80, 65], "Sinistcha": [71, 60, 106, 121, 80, 70], "Slowking-Galar": [95, 65, 80, 110, 110, 30], "Snorlax": [160, 110, 65, 65, 110, 30], "Umbreon": [95, 65, 110, 60, 130, 65], "Volcarona": [85, 60, 65, 135, 105, 100]};
+const MOVES = [["Flamethrower", 90, "Special", "Fire"], ["Fire Blast", 110, "Special", "Fire"], ["Heat Wave", 95, "Special", "Fire"], ["Overheat", 130, "Special", "Fire"], ["Flare Blitz", 120, "Physical", "Fire"], ["Fire Punch", 75, "Physical", "Fire"], ["Hydro Pump", 110, "Special", "Water"], ["Surf", 90, "Special", "Water"], ["Scald", 80, "Special", "Water"], ["Waterfall", 80, "Physical", "Water"], ["Aqua Jet", 40, "Physical", "Water"], ["Thunderbolt", 90, "Special", "Electric"], ["Thunder", 110, "Special", "Electric"], ["Volt Switch", 70, "Special", "Electric"], ["Wild Charge", 90, "Physical", "Electric"], ["Ice Beam", 90, "Special", "Ice"], ["Blizzard", 110, "Special", "Ice"], ["Ice Punch", 75, "Physical", "Ice"], ["Icicle Crash", 85, "Physical", "Ice"], ["Earthquake", 100, "Physical", "Ground"], ["Earth Power", 90, "Special", "Ground"], ["High Horsepower", 95, "Physical", "Ground"], ["Dragon Claw", 80, "Physical", "Dragon"], ["Outrage", 120, "Physical", "Dragon"], ["Draco Meteor", 130, "Special", "Dragon"], ["Dragon Pulse", 85, "Special", "Dragon"], ["Shadow Ball", 80, "Special", "Ghost"], ["Shadow Claw", 70, "Physical", "Ghost"], ["Shadow Sneak", 40, "Physical", "Ghost"], ["Make It Rain", 120, "Special", "Steel"], ["Iron Head", 80, "Physical", "Steel"], ["Flash Cannon", 80, "Special", "Steel"], ["Sucker Punch", 70, "Physical", "Dark"], ["Knock Off", 65, "Physical", "Dark"], ["Crunch", 80, "Physical", "Dark"], ["Dark Pulse", 80, "Special", "Dark"], ["Play Rough", 90, "Physical", "Fairy"], ["Moonblast", 95, "Special", "Fairy"], ["Dazzling Gleam", 80, "Special", "Fairy"], ["Close Combat", 120, "Physical", "Fighting"], ["Drain Punch", 75, "Physical", "Fighting"], ["Aura Sphere", 80, "Special", "Fighting"], ["Psychic", 90, "Special", "Psychic"], ["Psyshock", 80, "Special", "Psychic"], ["Zen Headbutt", 80, "Physical", "Psychic"], ["Giga Drain", 75, "Special", "Grass"], ["Energy Ball", 90, "Special", "Grass"], ["Leaf Storm", 130, "Special", "Grass"], ["Flower Trick", 70, "Physical", "Grass"], ["U-turn", 70, "Physical", "Bug"], ["Bug Buzz", 90, "Special", "Bug"], ["Hurricane", 110, "Special", "Flying"], ["Air Slash", 75, "Special", "Flying"], ["Brave Bird", 120, "Physical", "Flying"], ["Body Slam", 85, "Physical", "Normal"], ["Double-Edge", 120, "Physical", "Normal"], ["Extreme Speed", 80, "Physical", "Normal"], ["Hyper Voice", 90, "Special", "Normal"], ["Sludge Bomb", 90, "Special", "Poison"], ["Poison Jab", 80, "Physical", "Poison"], ["Stone Edge", 100, "Physical", "Rock"], ["Rock Slide", 75, "Physical", "Rock"]];
+const TYPES = ["Normal", "Fire", "Water", "Electric", "Grass", "Ice", "Fighting", "Poison", "Ground", "Flying", "Psychic", "Bug", "Rock", "Ghost", "Dragon", "Dark", "Steel", "Fairy"];
+const NATURES = ["Neutral", "Adamant (+Atk -SpA)", "Modest (+SpA -Atk)", "Jolly (+Spe -SpA)", "Timid (+Spe -Atk)", "Impish (+Def -SpA)", "Bold (+Def -Atk)", "Careful (+SpD -SpA)", "Calm (+SpD -Atk)", "Brave (+Atk -Spe)", "Quiet (+SpA -Spe)", "Relaxed (+Def -Spe)", "Sassy (+SpD -Spe)"];
+
+const $ = (x) => document.getElementById(x);
+const num = (x) => Number($(x).value) || 0;
+
+function populate() {
+  const pokeNames = Object.keys(POKEMON).sort();
+  for (const selectId of ["attackerPokemon", "defenderPokemon"]) {
+    const sel = $(selectId);
+    sel.innerHTML = "";
+    for (const name of pokeNames) {
+      const opt = document.createElement("option");
+      opt.value = name;
+      const s = POKEMON[name];
+      opt.textContent = `${name} — HP ${s[0]} Atk ${s[1]} Def ${s[2]} SpA ${s[3]} SpD ${s[4]} Spe ${s[5]}`;
+      sel.appendChild(opt);
+    }
+  }
+
+  $("moveSelect").innerHTML = "";
+  for (const m of MOVES) {
+    const opt = document.createElement("option");
+    opt.value = m[0];
+    opt.textContent = `${m[0]} — ${m[1]} ${m[2] === "Physical" ? "Atk" : "SpA"} ${m[3]}`;
+    $("moveSelect").appendChild(opt);
+  }
+
+  for (const id of ["moveType"]) {
+    $(id).innerHTML = "";
+    for (const t of TYPES) {
+      const opt = document.createElement("option");
+      opt.value = t;
+      opt.textContent = t;
+      $(id).appendChild(opt);
+    }
+  }
+
+  for (const id of ["attNature", "defNature"]) {
+    $(id).innerHTML = "";
+    for (const n of NATURES) {
+      const opt = document.createElement("option");
+      opt.value = n;
+      opt.textContent = n;
+      $(id).appendChild(opt);
+    }
+  }
+  $("attNature").value = "Modest (+SpA -Atk)";
+  $("defNature").value = "Neutral";
+  $("moveType").value = "Fire";
+}
+
+function natureMult(nature, stat) {
+  if (nature.includes("+" + stat)) return 1.1;
+  if (nature.includes("-" + stat)) return 0.9;
+  return 1;
+}
+function calcNonHP(base, iv, ev, level, nature, stat) {
+  return Math.floor((Math.floor(((2 * base + iv + Math.floor(ev / 4)) * level) / 100) + 5) * natureMult(nature, stat));
+}
+function calcHP(base, iv, ev, level) {
+  return Math.floor(((2 * base + iv + Math.floor(ev / 4)) * level) / 100) + level + 10;
+}
+function stats() {
+  const atk = calcNonHP(num("attBaseAtk"), num("attAtkIV"), num("attAtkEV"), num("attLevel"), $("attNature").value, "Atk");
+  const spa = calcNonHP(num("attBaseSpa"), num("attSpaIV"), num("attSpaEV"), num("attLevel"), $("attNature").value, "SpA");
+  const hp = calcHP(num("defBaseHp"), num("defHpIV"), num("defHpEV"), num("defLevel"));
+  const def = calcNonHP(num("defBaseDef"), num("defDefIV"), num("defDefEV"), num("defLevel"), $("defNature").value, "Def");
+  const spd = calcNonHP(num("defBaseSpd"), num("defSpdIV"), num("defSpdEV"), num("defLevel"), $("defNature").value, "SpD");
+  $("attAtkStat").textContent = atk;
+  $("attSpaStat").textContent = spa;
+  $("defHpStat").textContent = hp;
+  $("defDefStat").textContent = def;
+  $("defSpdStat").textContent = spd;
+  return {atk, spa, hp, def, spd};
+}
+function loadAttacker() {
+  const name = $("attackerPokemon").value;
+  const s = POKEMON[name];
+  $("attBaseAtk").value = s[1];
+  $("attBaseSpa").value = s[3];
+  $("attLoaded").textContent = `${name} — Atk ${s[1]} / SpA ${s[3]}`;
+  stats();
+}
+function loadDefender() {
+  const name = $("defenderPokemon").value;
+  const s = POKEMON[name];
+  $("defBaseHp").value = s[0];
+  $("defBaseDef").value = s[2];
+  $("defBaseSpd").value = s[4];
+  $("defLoaded").textContent = `${name} — HP ${s[0]} / Def ${s[2]} / SpD ${s[4]}`;
+  stats();
+}
+function loadMove() {
+  const name = $("moveSelect").value;
+  const m = MOVES.find((x) => x[0] === name);
+  $("moveName").value = m[0];
+  $("power").value = m[1];
+  $("category").value = m[2];
+  $("moveType").value = m[3];
+  stats();
+}
+function setAttackerEV(kind) {
+  $("attAtkEV").value = kind === "physical" ? 252 : 0;
+  $("attSpaEV").value = kind === "special" ? 252 : 0;
+  stats();
+}
+function setDefenderEV(kind) {
+  $("defHpEV").value = kind === "none" ? 0 : 252;
+  $("defDefEV").value = kind === "physical" ? 252 : 0;
+  $("defSpdEV").value = kind === "special" ? 252 : 0;
+  stats();
+}
+function damage() {
+  const s = stats();
+  const category = $("category").value;
+  const A = category === "Physical" ? s.atk : s.spa;
+  const D = category === "Physical" ? s.def : s.spd;
+  let mod = Number($("stab").value) * Number($("typeEff").value) * Number($("crit").value) * Number($("spread").value) * Number($("otherMod").value);
+  if (category === "Physical") mod *= Number($("burn").value);
+
+  const first = Math.floor((2 * num("attLevel")) / 5 + 2);
+  const second = Math.floor(first * num("power") * A / D);
+  const third = Math.floor(second / 50) + 2;
+  const modified = Math.floor(third * mod);
+  const rolls = [];
+  for (let r = 85; r <= 100; r++) rolls.push(Math.max(1, Math.floor(modified * r / 100)));
+
+  const min = Math.min(...rolls);
+  const max = Math.max(...rolls);
+  const minPct = min / s.hp * 100;
+  const maxPct = max / s.hp * 100;
+  const ko = min >= s.hp ? "Guaranteed OHKO" : max >= s.hp ? "Possible OHKO" : max * 2 >= s.hp ? "Possible 2HKO" : "Not a 2HKO by raw max rolls";
+
+  $("result").innerHTML = `<div class="damage">${min}–${max} damage</div>
+    <div>${minPct.toFixed(1)}%–${maxPct.toFixed(1)}% of defender HP</div>
+    <div style="margin-top:8px"><span class="pill">${ko}</span><span class="pill">${$("moveName").value}</span><span class="pill">${category}</span></div>
+    <div class="small" style="margin-top:8px">Rolls: ${rolls.join(", ")}</div>`;
+
+  $("barInner").style.width = Math.min(100, maxPct) + "%";
+  $("barInner").style.background = maxPct >= 100 ? "var(--bad)" : maxPct >= 50 ? "var(--warn)" : "var(--good)";
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  populate();
+  $("loadAttacker").addEventListener("click", loadAttacker);
+  $("loadDefender").addEventListener("click", loadDefender);
+  $("loadMove").addEventListener("click", loadMove);
+  $("calcBtn").addEventListener("click", damage);
+  $("attPhys").addEventListener("click", () => setAttackerEV("physical"));
+  $("attSpec").addEventListener("click", () => setAttackerEV("special"));
+  $("defNone").addEventListener("click", () => setDefenderEV("none"));
+  $("defPhys").addEventListener("click", () => setDefenderEV("physical"));
+  $("defSpec").addEventListener("click", () => setDefenderEV("special"));
+  document.querySelectorAll("input, select").forEach((el) => {
+    el.addEventListener("input", stats);
+    el.addEventListener("change", stats);
+  });
+  loadAttacker();
+  loadDefender();
+  loadMove();
+  stats();
+});
+</script>
+</body>
+</html>
