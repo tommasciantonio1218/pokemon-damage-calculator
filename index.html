@@ -41,8 +41,7 @@ button.secondary { background:#1e293b; color:var(--text); border:1px solid var(-
 </head>
 <body>
 <h1>Pokémon Damage Calculator</h1>
-<div class="subtitle">GitHub Pages build — JavaScript web app</div>
-<div class="status">Ready. Select Pokémon/move, tap load, then calculate.</div>
+<div class="subtitle">Mobile damage range calculator</div>
 
 <div class="card">
 <h2>Attacker</h2>
@@ -66,7 +65,7 @@ button.secondary { background:#1e293b; color:var(--text); border:1px solid var(-
   <div class="field"><label>SpA EV</label><input id="attSpaEV" type="number" value="252"></div>
   <div class="field"><label>SpA IV</label><input id="attSpaIV" type="number" value="31"></div>
 </div>
-<div class="statline">Loaded: <b id="attLoaded">Custom</b><br>Using Atk: <b id="attAtkStat">0</b> · Using SpA: <b id="attSpaStat">0</b></div>
+<div class="statline">Atk: <b id="attAtkStat">0</b> · SpA: <b id="attSpaStat">0</b></div>
 </div>
 
 <div class="card">
@@ -121,7 +120,7 @@ button.secondary { background:#1e293b; color:var(--text); border:1px solid var(-
   <div class="field"><label>SpD EV</label><input id="defSpdEV" type="number" value="0"></div>
   <div class="field"><label>SpD IV</label><input id="defSpdIV" type="number" value="31"></div>
 </div>
-<div class="statline">Loaded: <b id="defLoaded">Custom</b><br>HP: <b id="defHpStat">0</b> · Def: <b id="defDefStat">0</b> · SpD: <b id="defSpdStat">0</b></div>
+<div class="statline">HP: <b id="defHpStat">0</b> · Def: <b id="defDefStat">0</b> · SpD: <b id="defSpdStat">0</b></div>
 </div>
 
 <div class="card"><button type="button" id="calcBtn">Calculate Damage</button></div>
@@ -151,7 +150,7 @@ function populate() {
       const opt = document.createElement("option");
       opt.value = name;
       const s = POKEMON[name];
-      opt.textContent = `${name} — HP ${s[0]} Atk ${s[1]} Def ${s[2]} SpA ${s[3]} SpD ${s[4]} Spe ${s[5]}`;
+      opt.textContent = name;
       sel.appendChild(opt);
     }
   }
@@ -160,7 +159,7 @@ function populate() {
   for (const m of MOVES) {
     const opt = document.createElement("option");
     opt.value = m[0];
-    opt.textContent = `${m[0]} — ${m[1]} ${m[2] === "Physical" ? "Atk" : "SpA"} ${m[3]}`;
+    opt.textContent = m[0];
     $("moveSelect").appendChild(opt);
   }
 
@@ -217,7 +216,6 @@ function loadAttacker() {
   const s = POKEMON[name];
   $("attBaseAtk").value = s[1];
   $("attBaseSpa").value = s[3];
-  $("attLoaded").textContent = `${name} — Atk ${s[1]} / SpA ${s[3]}`;
   stats();
 }
 function loadDefender() {
@@ -226,7 +224,6 @@ function loadDefender() {
   $("defBaseHp").value = s[0];
   $("defBaseDef").value = s[2];
   $("defBaseSpd").value = s[4];
-  $("defLoaded").textContent = `${name} — HP ${s[0]} / Def ${s[2]} / SpD ${s[4]}`;
   stats();
 }
 function loadMove() {
